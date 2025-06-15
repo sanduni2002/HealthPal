@@ -3,88 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatBot</title>
+    <title>HealthPal Chat</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
-    <div class="chat-box">
-        <div class="chat-box-header">
-            <h3>Message Us</h3>
-            <p><i class="fa fa-times"></i></p>
+    <div class="chat-container">
+        <!-- Chat Toggle Button -->
+        <div class="chat-toggle-btn">
+            <i class="fas fa-comment-medical"></i>
+            <span>Health Assistant</span>
         </div>
-        <div class="chat-box-body">
-            <div class="chat-box-body-send">
-                <p>This is my message.</p>
-                <span>12:00</span>
+
+        <!-- Chat Window -->
+        <div class="chat-window">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <i class="fas fa-robot"></i>
+                    <h3>HealthPal Assistant</h3>
+                </div>
+                <div class="chat-close">
+                    <i class="fas fa-times"></i>
+                </div>
             </div>
-            <div class="chat-box-body-receive">
-                <p>This is my message.</p>
-                <span>12:00</span>
+
+            <div class="chat-messages" id="chat-messages">
+                <!-- Welcome Message -->
+                <div class="message received">
+                    <div class="message-content">
+                        <p>Hello! I'm HealthPal, your medical assistant. How can I help you today?</p>
+                    </div>
+                    <div class="message-time">Just now</div>
+                </div>
             </div>
-            <div class="chat-box-body-receive">
-                <p>This is my message.</p>
-                <span>12:00</span>
-            </div>
-            <div class="chat-box-body-send">
-                <p>This is my message.</p>
-                <span>12:00</span>
-            </div>
-            <div class="chat-box-body-send">
-                <p>This is my message.</p>
-                <span>12:00</span>
-            </div>
-            <div class="chat-box-body-receive">
-                <p>This is my message.</p>
-                <span>12:00</span>
-            </div>
-            <div class="chat-box-body-receive">
-                <p>This is my message.</p>
-                <span>12:00</span>
-            </div>
-            <div class="chat-box-body-send">
-                <p>This is my message.</p>
-                <span>12:00</span>
+
+            <div class="chat-input">
+                <button class="attach-btn" id="addExtra">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="text" placeholder="Type your health question..." id="user-input">
+                <button class="send-btn" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
-        <div class="chat-box-footer">
-            <button id="addExtra"><i class="fa fa-plus"></i></button>
-            <input placeholder="Enter Your Message" type="text">
-            <i class="send far fa-paper-plane"></i>
-        </div>
-    </div>
-    <div class="chat-button"><span></span></div>
-    <div class="modal">
-        <div class="modal-content">
-            <span class="modal-close-button">&times;</span>
-            <h1>Add What you want here.</h1>
+
+        <!-- Modal -->
+        <div class="modal" id="extra-modal">
+            <div class="modal-content">
+                <span class="modal-close-button">&times;</span>
+                <h2>Additional Options</h2>
+                <div class="modal-options">
+                    <button class="modal-option">
+                        <i class="fas fa-prescription-bottle-alt"></i>
+                        <span>Medication Info</span>
+                    </button>
+                    <button class="modal-option">
+                        <i class="fas fa-procedures"></i>
+                        <span>Symptoms Check</span>
+                    </button>
+                    <button class="modal-option">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>Health Tips</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $('.chat-button').on('click', function() {
-            $('.chat-button').css({
-                "display": "none"
-            });
-            $('.chat-box').css({
-                "visibility": "visible"
-            });
+<script>
+$(document).ready(function() {
+    // Debug flag
+    const DEBUG_MODE = true;
+    
+    function logDebug(message) {
+        if (DEBUG_MODE) {
+            console.log("[DEBUG]", message);
+        }
+    }
+
+    // Toggle chat window
+    $('.chat-toggle-btn').on('click', function() {
+        logDebug("Chat toggle button clicked");
+        $('.chat-toggle-btn').fadeOut(200);
+        $('.chat-window').fadeIn(300).css('display', 'flex');
+    });
+
+    // Close chat window
+    $('.chat-close').on('click', function() {
+        logDebug("Chat close button clicked");
+        $('.chat-window').fadeOut(200);
+        $('.chat-toggle-btn').fadeIn(300);
+    });
+
+    // Toggle modal
+    $("#addExtra").on("click", function() {
+        logDebug("Modal toggle button clicked");
+        $("#extra-modal").toggleClass("show-modal");
+    });
+
+    $(".modal-close-button").on("click", function() {
+        logDebug("Modal close button clicked");
+        $("#extra-modal").toggleClass("show-modal");
+    });
+
+    // Send message when Enter is pressed
+    $('#user-input').keypress(function(e) {
+        if (e.which == 13) {
+            logDebug("Enter key pressed");
+            sendMessage();
+        }
+    });
+
+    // Send message when send button is clicked
+    $('#send-btn').click(function() {
+        logDebug("Send button clicked");
+        sendMessage();
+    });
+
+    // Main function to send messages
+    function sendMessage() {
+        const message = $('#user-input').val().trim();
+        if (!message) {
+            logDebug("Empty message prevented");
+            return;
+        }
+
+        logDebug("Sending message: " + message);
+        addMessage(message, 'sent');
+        $('#user-input').val('');
+        
+        // Show typing indicator
+        const typingIndicator = addMessage('<i class="fas fa-circle-notch fa-spin"></i> HealthPal is thinking...', 'received');
+        
+        // Send message to backend
+        $.ajax({
+            type: "POST",
+            url: "/get",
+            data: {msg: message},
+            dataType: "text",  // Explicitly expect text response
+            beforeSend: function() {
+                logDebug("AJAX request initiated");
+            },
+            success: function(response, status, xhr) {
+                logDebug("AJAX success - Status: " + xhr.status + " Response: " + response);
+                $(typingIndicator).remove();
+                if (response && response.trim() !== "") {
+                    addMessage(response, 'received');
+                } else {
+                    addMessage("Received empty response from server", 'received');
+                }
+            },
+            error: function(xhr, status, error) {
+                logDebug("AJAX error - Status: " + xhr.status + " Error: " + error);
+                $(typingIndicator).remove();
+                let errorMsg = "Sorry, I'm having trouble responding right now.";
+                if (xhr.responseText) {
+                    errorMsg += "<br><small>Technical details: " + xhr.responseText + "</small>";
+                }
+                addMessage(errorMsg, 'received');
+                
+                // Additional debug info
+                console.group("AJAX Error Details");
+                console.log("Status:", status);
+                console.log("Error:", error);
+                console.log("Response:", xhr.responseText);
+                console.log("ReadyState:", xhr.readyState);
+                console.groupEnd();
+            },
+            complete: function(xhr, status) {
+                logDebug("AJAX request completed with status: " + status);
+            }
         });
-        $('.chat-box .chat-box-header p').on('click', function() {
-            $('.chat-button').css({
-                "display": "block"
-            });
-            $('.chat-box').css({
-                "visibility": "hidden"
-            });
+    }
+
+    // Function to add messages to the chat
+    function addMessage(content, type) {
+        const time = new Date().toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit'
         });
-        $("#addExtra").on("click", function() {
-            $(".modal").toggleClass("show-modal");
+        
+        const messageHTML = `
+            <div class="message ${type}">
+                <div class="message-content">
+                    ${content}
+                </div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+        
+        $('.chat-messages').append(messageHTML);
+        // Auto-scroll to bottom
+        $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
+    }
+
+    // Initial debug check
+    logDebug("Chat interface initialized");
+    logDebug("Testing backend connection...");
+    
+    $.get("/ping")
+        .done(function(data) {
+            logDebug("Backend connection successful: " + JSON.stringify(data));
+        })
+        .fail(function(xhr) {
+            logDebug("Backend connection failed: " + xhr.status + " " + xhr.statusText);
         });
-        $(".modal-close-button").on("click", function() {
-            $(".modal").toggleClass("show-modal");
-        });
-    </script>
+});
+</script>
 </body>
 </html>
